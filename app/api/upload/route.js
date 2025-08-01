@@ -1,41 +1,63 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import cloudinary from '../../../lib/cloudinary';
+import { authOptions } from '../auth/[...nextauth]/route';
 
 export async function POST(request) {
   try {
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
+    
+    console.log('Session:', session);
+    console.log('User role:', session?.user?.role);
     
     if (!session) {
       return NextResponse.json(
-        { message: 'Unauthorized' },
+        { message: 'Unauthorized - No session found' },
         { status: 401 }
       );
     }
 
     if (session.user.role !== 'creator' && session.user.role !== 'admin') {
       return NextResponse.json(
-        { message: 'Only creators can upload files' },
+        { message: `Only creators can upload files. Your role: ${session.user.role}` },
         { status: 403 }
       );
     }
 
-    const { fileUrl, fileName, fileType } = await request.json();
+    const formData = await request.formData();
+    const file = formData.get('file');
 
-    // For now, we'll just validate the URL and return it
-    // In a real implementation, you would upload to cloud storage (AWS S3, Cloudinary, etc.)
-    if (!fileUrl || !fileUrl.startsWith('http')) {
+    if (!file) {
       return NextResponse.json(
-        { message: 'Invalid file URL' },
+        { message: 'No file provided' },
         { status: 400 }
       );
     }
 
-    // Return the URL as the uploaded file location
+    // Convert file to buffer
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    // Upload to Cloudinary
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        {
+          resource_type: 'auto',
+          folder: 'lms-courses',
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      ).end(buffer);
+    });
+
     return NextResponse.json({
       success: true,
-      fileUrl: fileUrl,
-      fileName: fileName || 'uploaded-file',
-      message: 'File URL saved successfully'
+      fileUrl: result.secure_url,
+      publicId: result.public_id,
+      fileName: file.name,
+      message: 'File uploaded successfully'
     });
 
   } catch (error) {

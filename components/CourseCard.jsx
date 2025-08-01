@@ -43,19 +43,11 @@ export default function CourseCard({ course, isEnrolled = false }) {
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 overflow-hidden border-gray-200">
       <div className="relative">
-        {course.modules && course.modules.length > 0 && course.modules[0].videoUrl ? (
-          <VideoPreview 
-            videoUrl={course.modules[0].videoUrl}
-            isEnrolled={isEnrolled}
-            className="w-full h-48 group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <img
-            src={course.thumbnail}
-            alt={course.title}
-            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        )}
+        <img
+          src={course.thumbnail}
+          alt={course.title}
+          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+        />
         {course.isFree && (
           <div className="absolute top-3 left-3 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-sm">
             FREE

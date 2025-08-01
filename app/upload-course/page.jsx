@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
+import ImageUpload from '@/components/ImageUpload';
 import { 
   Upload, 
   Plus, 
@@ -148,6 +149,23 @@ export default function UploadCoursePage() {
     setIsLoading(true);
     setError('');
 
+    // Validate thumbnail
+    if (!formData.thumbnail) {
+      setError('Please upload a course thumbnail');
+      setIsLoading(false);
+      return;
+    }
+
+         // Validate that each module has a video URL
+     for (let i = 0; i < formData.modules.length; i++) {
+       const module = formData.modules[i];
+       if (!module.videoUrl || module.videoUrl.trim() === '') {
+         setError(`Module ${i + 1} must have a video URL`);
+         setIsLoading(false);
+         return;
+       }
+     }
+
     try {
       const response = await fetch('/api/courses', {
         method: 'POST',
@@ -256,15 +274,28 @@ export default function UploadCoursePage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Thumbnail URL *
+                    Course Thumbnail *
                   </label>
-                  <Input
-                    name="thumbnail"
-                    value={formData.thumbnail}
-                    onChange={handleInputChange}
-                    placeholder="Enter thumbnail URL"
-                    required
+                  <ImageUpload 
+                    onUpload={(url, publicId) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        thumbnail: url
+                      }));
+                    }}
+                    buttonText="Upload Course Thumbnail"
+                    className="mb-2"
+                    showPreview={false}
                   />
+                  {formData.thumbnail && (
+                    <div className="mt-2">
+                      <img 
+                        src={formData.thumbnail} 
+                        alt="Course thumbnail" 
+                        className="w-32 h-32 object-cover rounded border"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -373,25 +404,20 @@ export default function UploadCoursePage() {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Video URL *
-                    </label>
-                    <div className="space-y-2">
-                      <Input
-                        value={module.videoUrl}
-                        onChange={(e) => handleModuleChange(index, 'videoUrl', e.target.value)}
-                        placeholder="Enter video URL (YouTube, Vimeo, or direct link)"
-                        required
-                      />
-                                             <p className="text-xs text-gray-500">
-                         Supported formats: YouTube, Vimeo, or direct video links. 
-                         For YouTube, use format: https://www.youtube.com/watch?v=VIDEO_ID
-                         <br/>
-                         Example: https://www.youtube.com/watch?v=dQw4w9WgXcQ
-                       </p>
-                    </div>
-                  </div>
+                                     <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">
+                       Video URL *
+                     </label>
+                     <Input
+                       value={module.videoUrl}
+                       onChange={(e) => handleModuleChange(index, 'videoUrl', e.target.value)}
+                       placeholder="Enter YouTube or Vimeo URL"
+                       required
+                     />
+                     <p className="text-xs text-gray-500 mt-1">
+                       Paste YouTube or Vimeo video URL here
+                     </p>
+                   </div>
 
                   <div className="flex items-center space-x-4">
                     <label className="flex items-center">
