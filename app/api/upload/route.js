@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import cloudinary from '../../../lib/cloudinary';
-import { authOptions } from '../auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
     
-    console.log('Session:', session);
     console.log('User role:', session?.user?.role);
     
     if (!session) {
